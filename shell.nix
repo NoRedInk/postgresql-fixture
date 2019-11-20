@@ -3,19 +3,11 @@ let
   inherit (nixpkgs) pkgs;
   inherit (pkgs) haskellPackages;
 
-  haskellDeps = ps: with ps; [
-    base
-  ];
-
-  ghc = haskellPackages.ghcWithPackages haskellDeps;
-
-  nixPackages = [
-    ghc
-    pkgs.gdb
-    haskellPackages.cabal-install
-  ];
+  project = import ./release.nix;
 in
 pkgs.stdenv.mkDerivation {
-  name = "env";
-  buildInputs = nixPackages;
+  name = "shell";
+  buildInputs = project.env.nativeBuildInputs ++ [
+    haskellPackages.cabal-install
+  ];
 }
