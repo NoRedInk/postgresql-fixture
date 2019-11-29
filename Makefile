@@ -10,6 +10,10 @@ shell: shell.nix
 repl: shell.nix
 	nix-shell --pure $^ --run "cabal repl"
 
+.PHONY:
+format:
+	git ls-files -z 'src/*.hs' | xargs -0n1 -- ormolu --mode=inplace
+
 shell.nix: release.nix
 
 release.nix: default.nix
