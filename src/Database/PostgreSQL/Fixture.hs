@@ -1,6 +1,6 @@
 -- |
 -- Description : Fixtures for bringing up PostgreSQL clusters.
-module Database.Postgres.Fixture
+module Database.PostgreSQL.Fixture
   ( ephemeralCluster,
     simpleConnection,
   )
@@ -8,11 +8,11 @@ where
 
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Acquire
+import qualified Database.PostgreSQL.Cluster as Cluster
+import Database.PostgreSQL.Cluster (Cluster (Cluster))
+import qualified Database.PostgreSQL.Fixture.Settings as Settings
 import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Simple.Types as Simple.Types
-import qualified Database.Postgres.Cluster as Cluster
-import Database.Postgres.Cluster (Cluster (Cluster))
-import qualified Database.Postgres.Fixture.Settings as Settings
 import System.Directory (getTemporaryDirectory, removeDirectoryRecursive)
 import qualified System.Environment as Environment
 import System.FilePath ((</>))

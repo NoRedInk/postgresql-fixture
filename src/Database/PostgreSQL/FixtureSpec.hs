@@ -1,4 +1,4 @@
-module Database.Postgres.FixtureSpec (tests) where
+module Database.PostgreSQL.FixtureSpec (tests) where
 
 import Data.Acquire (with)
 import qualified Database.PostgreSQL.Simple as Simple

@@ -1,6 +1,6 @@
 -- |
 -- Description : Fixtures for bringing up PostgreSQL clusters.
-module Database.Postgres.Cluster
+module Database.PostgreSQL.Cluster
   ( Cluster (..),
     create,
     start,
@@ -10,7 +10,7 @@ module Database.Postgres.Cluster
 where
 
 import qualified Data.Map.Strict as Dict
-import qualified Database.Postgres.Fixture.Settings as Settings
+import qualified Database.PostgreSQL.Fixture.Settings as Settings
 import System.Directory (removeDirectoryRecursive)
 import qualified System.Environment as Environment
 import System.FilePath ((</>), FilePath)
