@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- |
 -- Description : Fixtures for bringing up PostgreSQL clusters.
 module Database.PostgreSQL.Cluster
@@ -6,10 +8,15 @@ module Database.PostgreSQL.Cluster
     start,
     stop,
     destroy,
+    Version (..),
+    version,
   )
 where
 
+import Data.Attoparsec.Text as Attoparsec
 import qualified Data.Map.Strict as Dict
+import qualified Data.Text.Lazy
+import qualified Data.Text.Lazy.Encoding
 import qualified Database.PostgreSQL.Fixture.Settings as Settings
 import System.Directory (removeDirectoryRecursive)
 import qualified System.Environment as Environment
@@ -111,6 +118,35 @@ stop Cluster {dataDir, environ} = do
 destroy :: Cluster -> IO ()
 destroy Cluster {dataDir} =
   removeDirectoryRecursive dataDir
+
+data Version = Version Int Int Int deriving (Show)
+
+versionParser :: Parser Version
+versionParser = do
+  major <- decimal
+  _ <- string "."
+  minor <- decimal
+  _ <- string "."
+  patch <- decimal
+  pure $ Version major minor patch
+
+versionLineParser :: Parser Version
+versionLineParser = do
+  string "pg_ctl" *> skipSpace *> skipWhile ((/=) ' ') *> skipSpace
+  versionParser
+
+version :: Cluster -> IO (Maybe Version)
+version cluster = do
+  env <- clusterEnvironment cluster
+  outputRaw <-
+    Process.readProcessStdout_
+      $ Process.setEnv env
+      $ Process.proc "pg_ctl" ["--version"]
+  let output = Data.Text.Lazy.Encoding.decodeUtf8 outputRaw
+  let version = parseOnly versionLineParser $ Data.Text.Lazy.toStrict output
+  pure $ case version of
+    Left err -> Nothing
+    Right vn -> Just vn
 
 augmentEnvironment :: [(String, String)] -> IO [(String, String)]
 augmentEnvironment overrides = do

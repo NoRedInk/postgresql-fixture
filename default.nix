@@ -1,6 +1,6 @@
-{ mkDerivation, base, containers, directory, filepath, network
-, optparse-applicative, postgresql-simple, process, resourcet
-, stdenv, text, typed-process, unix
+{ mkDerivation, attoparsec, base, containers, directory, filepath
+, network, optparse-applicative, postgresql-simple, process
+, resourcet, stdenv, text, typed-process, unix
 }:
 mkDerivation {
   pname = "postgresql-fixture";
@@ -9,8 +9,8 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    base containers directory filepath network postgresql-simple
-    resourcet text typed-process unix
+    attoparsec base containers directory filepath network
+    postgresql-simple resourcet text typed-process unix
   ];
   executableHaskellDepends = [
     base directory filepath optparse-applicative process unix
