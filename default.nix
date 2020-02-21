@@ -1,6 +1,6 @@
 { mkDerivation, base, containers, directory, filepath, network
-, postgresql-simple, process, resourcet, stdenv, text
-, typed-process, unix
+, optparse-applicative, postgresql-simple, process, resourcet
+, stdenv, text, typed-process, unix
 }:
 mkDerivation {
   pname = "postgresql-fixture";
@@ -13,7 +13,7 @@ mkDerivation {
     resourcet text typed-process unix
   ];
   executableHaskellDepends = [
-    base directory filepath process unix
+    base directory filepath optparse-applicative process unix
   ];
   license = "unknown";
   hydraPlatforms = stdenv.lib.platforms.none;
