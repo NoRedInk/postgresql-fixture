@@ -1,14 +1,12 @@
-{ nixpkgs ? import <nixpkgs> {} }:
+{ pkgs ? import ./nix/pkgs.nix }:
 let
-  inherit (nixpkgs) pkgs;
   inherit (pkgs) haskellPackages;
-
   project = import ./release.nix;
 in
 pkgs.stdenv.mkDerivation {
   name = "shell";
   buildInputs = project.env.nativeBuildInputs ++ [
     haskellPackages.cabal-install
-    haskellPackages.ormolu
+    pkgs.ormolu
   ];
 }
