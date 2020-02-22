@@ -10,6 +10,7 @@ module Database.PostgreSQL.Cluster
     destroy,
     Version (..),
     version,
+    versionCompare,
   )
 where
 
@@ -152,6 +153,22 @@ version cluster = do
   pure $ case version of
     Left err -> Nothing
     Right vn -> Just vn
+
+versionCompare :: Version -> Version -> Maybe Ordering
+versionCompare a b =
+  case (a, b) of
+    (Version majora minora patcha, Version majorb minorb patchb) ->
+      case compare majora majorb of
+        EQ -> case compare minora minorb of
+          EQ -> case (patcha, patchb) of
+            (Just pa, Just pb) -> Just $ compare pa pb
+            (Just _, Nothing) -> Just GT
+            (Nothing, Just _) -> Just LT
+            (Nothing, Nothing) -> Just EQ
+          result -> Just result
+        result -> Just result
+    (_, _) ->
+      Nothing
 
 augmentEnvironment :: [(String, String)] -> IO [(String, String)]
 augmentEnvironment overrides = do
