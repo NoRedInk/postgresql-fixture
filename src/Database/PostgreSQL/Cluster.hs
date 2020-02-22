@@ -36,6 +36,9 @@ data Cluster
 
 create :: Cluster -> IO ()
 create cluster = do
+  -- TODO: Set TZ here too? See initdb(1).
+  -- TODO: Set locale too? See initdb(1).
+  -- TODO: Set --nosync for speed? See initdb(1).
   env <- clusterEnvironment cluster
   Process.runProcess_
     $ Process.setEnv env
@@ -59,6 +62,9 @@ create cluster = do
 
 start :: Cluster -> IO Settings.ConnectionSettings
 start cluster@Cluster {dataDir} = do
+  -- TODO: Use -w to wait for startup? See pg_ctl(1).
+  -- TODO: Use -o -F to disable fsync for speed? See postgres(1).
+  --       Or set `fsync = off` in postgresql.conf.
   env <- clusterEnvironment cluster
   Process.runProcess_
     $ Process.setEnv env
@@ -87,6 +93,21 @@ start cluster@Cluster {dataDir} = do
         --
         "-o",
         printf "-h '' -p %u -k %s" arbitraryPort dataDir
+        --
+        -- The parameters above can also be set in $PGDATA/postgresql.conf. See
+        -- https://www.postgresql.org/docs/9.6/config-setting.html. Parameters
+        -- can also be set using ALTER SYSTEM; this may get around quoting
+        -- issues. See https://www.postgresql.org/docs/9.6/sql-altersystem.html.
+        --
+        -- -h can also be configured by setting `listen_addresses` parameter.
+        --
+        -- -p can also be set via `port` parameter or PGPORT environment
+        --    variable, but defaults to 5432 (compiled in).
+        --
+        -- -k can also be configured by setting `unix_socket_directories`
+        --    parameter. XXX: Also set `unix_socket_permissions` to 0700 to lock
+        --    down access to just the invoking user.
+        --
       ]
   -- Should this be `getLoginName` or `getEffectiveUserName`? Practically,
   -- for our purposes, it should not matter – they should be the same – so
