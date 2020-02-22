@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-exec git ls-files -z '*.nix'
+exec git ls-files -z '*.cabal' '*.nix'
