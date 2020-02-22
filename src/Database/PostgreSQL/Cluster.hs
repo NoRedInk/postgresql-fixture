@@ -10,18 +10,24 @@ module Database.PostgreSQL.Cluster
     destroy,
     Version (..),
     version,
+    versionText,
     versionCompare,
+    Status (..),
+    status,
   )
 where
 
 import Data.Attoparsec.Text as Attoparsec
 import qualified Data.Map.Strict as Dict
+import qualified Data.Text as Text
 import Data.Text (Text)
+import qualified Data.Text.Encoding
 import qualified Data.Text.Lazy
 import qualified Data.Text.Lazy.Encoding
 import qualified Database.PostgreSQL.Fixture.Settings as Settings
-import System.Directory (removeDirectoryRecursive)
+import System.Directory (doesDirectoryExist, doesFileExist, removeDirectoryRecursive)
 import qualified System.Environment as Environment
+import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 import System.FilePath ((</>), FilePath)
 import qualified System.Posix.User as User
 import qualified System.Process.Typed as Process
@@ -141,7 +147,11 @@ destroy Cluster {dataDir} =
 data Version
   = Version Int Int (Maybe Int)
   | Unknown Text
-  deriving (Show)
+
+versionText :: Version -> Text
+versionText (Version major minor Nothing) = Text.pack $ printf "%d.%d" major minor
+versionText (Version major minor (Just patch)) = Text.pack $ printf "%d.%d.%d" major minor patch
+versionText (Unknown version) = version <> " (unknown)"
 
 versionParser :: Parser Version
 versionParser = do
@@ -158,18 +168,18 @@ versionLineParser = do
   where
     skipNonSpace = skipWhile (not . isHorizontalSpace)
 
-version :: Cluster -> IO (Maybe Version)
+version :: Cluster -> IO Version
 version cluster = do
   env <- clusterEnvironment cluster
-  outputRaw <-
+  stdoutRaw <-
     Process.readProcessStdout_
       $ Process.setEnv env
       $ Process.proc "pg_ctl" ["--version"]
-  let output = Data.Text.Lazy.Encoding.decodeUtf8 outputRaw
-  let version = parseOnly versionLineParser $ Data.Text.Lazy.toStrict output
+  let stdout = decodeOutput stdoutRaw
+  let version = parseOnly versionLineParser $ stdout
   pure $ case version of
-    Left err -> Nothing
-    Right vn -> Just vn
+    Left err -> Unknown stdout
+    Right vn -> vn
 
 versionCompare :: Version -> Version -> Maybe Ordering
 versionCompare a b =
@@ -187,6 +197,52 @@ versionCompare a b =
     (_, _) ->
       Nothing
 
+data Status
+  = DoesNotExist
+  | Inaccessible
+  | Unsupported
+  | Stopped
+  | Started
+  | Error Int Text
+  deriving (Show)
+
+status :: Cluster -> IO Status
+status cluster = do
+  env <- clusterEnvironment cluster
+  (exitCode, outputRaw) <-
+    Process.readProcessInterleaved
+      $ Process.setEnv env
+      $ Process.proc "pg_ctl" ["status"]
+  case exitCode of
+    ExitSuccess -> pure Started
+    ExitFailure code -> do
+      version <- version cluster
+      case version `versionCompare` minVersion of
+        Nothing ->
+          -- The version is unknown so this is a bust.
+          pure Unsupported
+        Just LT ->
+          -- Versions before 9.4 had different rules for what the `pg_ctl
+          -- status` exit codes meant, but versions before 9.5 are not
+          -- supported upstream so here we just report an error. See
+          -- https://www.postgresql.org/support/versioning/.
+          pure Unsupported
+        Just _ ->
+          case code of
+            -- 3 = data directory is present and accessible, server not running.
+            3 -> pure Stopped
+            -- 4 = data directory is not present or is not accessible.
+            4 -> do
+              dataDirExists <- doesDirectoryExist $ dataDir cluster
+              if dataDirExists
+                then pure Inaccessible
+                else pure DoesNotExist
+            -- Everything else is an error.
+            _ -> pure $ Error code $ decodeOutput outputRaw
+  where
+    minVersion =
+      Version 9 5 Nothing
+
 clusterEnvironment :: Cluster -> IO [(String, String)]
 clusterEnvironment Cluster {dataDir, environ} =
   augmentEnvironment $ environ ++ [("PGDATA", dataDir)]
@@ -198,3 +254,6 @@ augmentEnvironment overrides = do
   let environmentDict = Dict.fromList environment
   let combinedDict = Dict.union overridesDict environmentDict
   pure $ Dict.toList combinedDict
+
+decodeOutput =
+  Data.Text.Lazy.toStrict . Data.Text.Lazy.Encoding.decodeUtf8
