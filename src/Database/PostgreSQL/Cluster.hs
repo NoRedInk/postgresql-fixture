@@ -14,6 +14,8 @@ module Database.PostgreSQL.Cluster
     versionCompare,
     Status (..),
     status,
+    lockShared,
+    lockExclusive,
   )
 where
 
@@ -28,7 +30,8 @@ import qualified Database.PostgreSQL.Fixture.Settings as Settings
 import System.Directory (doesDirectoryExist, doesFileExist, removeDirectoryRecursive)
 import qualified System.Environment as Environment
 import System.Exit (ExitCode (ExitFailure, ExitSuccess))
-import System.FilePath ((</>), FilePath)
+import qualified System.FileLock as FileLock
+import System.FilePath ((</>), FilePath, takeBaseName, takeDirectory)
 import qualified System.Posix.User as User
 import qualified System.Process.Typed as Process
 import Text.Printf (printf)
@@ -242,6 +245,18 @@ status cluster = do
   where
     minVersion =
       Version 9 5 Nothing
+
+lockShared :: Cluster -> IO a -> IO a
+lockShared cluster io =
+  FileLock.withFileLock (lockFilePath cluster) FileLock.Shared (const io)
+
+lockExclusive :: Cluster -> IO a -> IO a
+lockExclusive cluster io =
+  FileLock.withFileLock (lockFilePath cluster) FileLock.Exclusive (const io)
+
+lockFilePath :: Cluster -> FilePath
+lockFilePath Cluster {dataDir} =
+  takeDirectory dataDir </> ("." <> takeBaseName dataDir <> ".lock")
 
 clusterEnvironment :: Cluster -> IO [(String, String)]
 clusterEnvironment Cluster {dataDir, environ} =
