@@ -35,15 +35,13 @@ data Cluster
   deriving (Show)
 
 create :: Cluster -> IO ()
-create Cluster {dataDir, environ} = do
-  env <- augmentEnvironment environ
+create cluster = do
+  env <- clusterEnvironment cluster
   Process.runProcess_
     $ Process.setEnv env
     $ Process.proc
       "pg_ctl"
       [ "init",
-        "--pgdata",
-        dataDir,
         --
         -- Explanation of the options being passed in via `-o`:
         --
@@ -60,16 +58,14 @@ create Cluster {dataDir, environ} = do
       ]
 
 start :: Cluster -> IO Settings.ConnectionSettings
-start Cluster {dataDir, environ} = do
-  env <- augmentEnvironment environ
+start cluster@Cluster {dataDir} = do
+  env <- clusterEnvironment cluster
   Process.runProcess_
     $ Process.setEnv env
     $ Process.proc
       "pg_ctl"
       [ "start",
         "-w",
-        "--pgdata",
-        dataDir,
         "-l",
         dataDir </> "log",
         --
@@ -111,11 +107,11 @@ start Cluster {dataDir, environ} = do
     arbitraryPort = 5432
 
 stop :: Cluster -> IO ()
-stop Cluster {dataDir, environ} = do
-  env <- augmentEnvironment environ
+stop cluster = do
+  env <- clusterEnvironment cluster
   Process.runProcess_
     $ Process.setEnv env
-    $ Process.proc "pg_ctl" ["stop", "--pgdata", dataDir]
+    $ Process.proc "pg_ctl" ["stop"]
 
 destroy :: Cluster -> IO ()
 destroy Cluster {dataDir} =
@@ -169,6 +165,10 @@ versionCompare a b =
         result -> Just result
     (_, _) ->
       Nothing
+
+clusterEnvironment :: Cluster -> IO [(String, String)]
+clusterEnvironment Cluster {dataDir, environ} =
+  augmentEnvironment $ environ ++ [("PGDATA", dataDir)]
 
 augmentEnvironment :: [(String, String)] -> IO [(String, String)]
 augmentEnvironment overrides = do
