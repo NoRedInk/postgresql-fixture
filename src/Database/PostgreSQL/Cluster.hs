@@ -15,6 +15,7 @@ where
 
 import Data.Attoparsec.Text as Attoparsec
 import qualified Data.Map.Strict as Dict
+import Data.Text (Text)
 import qualified Data.Text.Lazy
 import qualified Data.Text.Lazy.Encoding
 import qualified Database.PostgreSQL.Fixture.Settings as Settings
@@ -119,21 +120,25 @@ destroy :: Cluster -> IO ()
 destroy Cluster {dataDir} =
   removeDirectoryRecursive dataDir
 
-data Version = Version Int Int Int deriving (Show)
+data Version
+  = Version Int Int (Maybe Int)
+  | Unknown Text
+  deriving (Show)
 
 versionParser :: Parser Version
 versionParser = do
   major <- decimal
-  _ <- string "."
-  minor <- decimal
-  _ <- string "."
-  patch <- decimal
+  minor <- string "." *> decimal
+  patch <- option Nothing (fmap Just $ string "." *> decimal)
+  endOfLine
   pure $ Version major minor patch
 
 versionLineParser :: Parser Version
 versionLineParser = do
-  string "pg_ctl" *> skipSpace *> skipWhile ((/=) ' ') *> skipSpace
-  versionParser
+  string "pg_ctl" *> skipSpace *> skipNonSpace *> skipSpace
+  choice [versionParser, fmap Unknown $ takeTill isEndOfLine]
+  where
+    skipNonSpace = skipWhile (not . isHorizontalSpace)
 
 version :: Cluster -> IO (Maybe Version)
 version cluster = do
