@@ -10,6 +10,12 @@ import qualified Database.PostgreSQL.Fixture.Settings as Settings
 import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Simple.Types as Simple.Types
 
+-- Ideas for top-level API:
+-- cluster :: Cluster -> Data.Acquire.Acquire Settings.ConnectionSettings
+-- ephemeralCluster :: Data.Acquire.Acquire Settings.ConnectionSettings
+-- acquireCluster :: Cluster -> Consumer -> IO Settings.ConnectionSettings
+-- releaseCluster :: Cluster -> Consumer -> IO ()
+
 simpleConnection :: Settings.ConnectionSettings -> Data.Acquire.Acquire Simple.Connection
 simpleConnection
   Settings.ConnectionSettings
