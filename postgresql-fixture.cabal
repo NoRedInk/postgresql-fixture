@@ -18,7 +18,7 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
 library
-  exposed-modules:     Database.PostgreSQL.Cluster Database.PostgreSQL.Fixture
+  exposed-modules:     Database.PostgreSQL.Cluster Database.PostgreSQL.Consumers Database.PostgreSQL.Fixture
   other-modules:       Database.PostgreSQL.Fixture.Settings
   -- other-extensions:
   build-depends:       attoparsec, base, containers, directory, filepath, unix, typed-process, text, network, resourcet, postgresql-simple, filelock
