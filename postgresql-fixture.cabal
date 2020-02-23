@@ -19,7 +19,7 @@ extra-source-files:  CHANGELOG.md
 
 library
   exposed-modules:     Database.PostgreSQL.Fixture
-  other-modules:       Database.PostgreSQL.Fixture.Cluster Database.PostgreSQL.Fixture.Consumers Database.PostgreSQL.Fixture.Settings
+  other-modules:       Database.PostgreSQL.Fixture.Cluster Database.PostgreSQL.Fixture.Consumers Database.PostgreSQL.Fixture.Ephemeral Database.PostgreSQL.Fixture.Settings
   -- other-extensions:
   build-depends:       attoparsec, base, containers, directory, filepath, unix, typed-process, text, network, resourcet, postgresql-simple, filelock
   hs-source-dirs:      src
