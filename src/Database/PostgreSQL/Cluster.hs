@@ -54,6 +54,8 @@ create cluster = do
     $ Process.proc
       "pg_ctl"
       [ "init",
+        "-o",
+        "--auth trust --encoding utf8"
         --
         -- Explanation of the options being passed in via `-o`:
         --
@@ -65,13 +67,13 @@ create cluster = do
         --
         -- See initdb(1) for more information on these flags.
         --
-        "-o",
-        "--auth trust --encoding utf8"
+        -- See all "Note on handling of options" below before adding new options
+        -- to this list, especially those that propagate user-supplied settings.
+        --
       ]
 
 start :: Cluster -> IO Settings.ConnectionSettings
 start cluster@Cluster {dataDir} = do
-  -- TODO: Use -w to wait for startup? See pg_ctl(1).
   -- TODO: Use -o -F to disable fsync for speed? See postgres(1).
   --       Or set `fsync = off` in postgresql.conf.
   env <- clusterEnvironment cluster
@@ -80,9 +82,11 @@ start cluster@Cluster {dataDir} = do
     $ Process.proc
       "pg_ctl"
       [ "start",
-        "-w",
-        "-l",
-        dataDir </> "log",
+        "--silent", -- No informational messages.
+        "-w", -- Wait for start (this is *not* the default).
+        "--log=" <> dataDir </> "log", -- Log to `$dataDir/log`.
+        "-o",
+        printf "-h '' -p %u -k %s" arbitraryPort dataDir
         --
         -- Explanation of the options being passed in via `-o`:
         --
@@ -92,16 +96,25 @@ start cluster@Cluster {dataDir} = do
         --            sockets, this is actually the suffix used in the socket
         --            file name, i.e. in `.s.PGSQL.NNNN`.
         --
-        -- -k dir  -> The directory in which to put the UNIX socket. Note that
+        -- -k dir..-> The directory in which to put the UNIX socket. Note that
         --            we don't shell-escape the `dataDir` directory we pass to
-        --            the `-k` argument out of laziness. We don't expect these
-        --            temporary directories to have spaces or weird characters
-        --            in them, so we should be good.
+        --            the `-k` argument.
+        --
+        -- Note on handling of options (`-o`):
+        --
+        --   pg_ctl handles options specified via the `-o` flag a little poorly.
+        --   They are passed almost as they are to a system(3) call. That means
+        --   we could shell escape the data directory for example, but in some
+        --   paths through pg_ctl's code these options are wrapped in double
+        --   quotes, so shell escaping them here might make things worse. I
+        --   haven't picked through pg_ctl's code to figure out exactly what's
+        --   safe and what's not so, for now, consider this mechanism kind of
+        --   broken – along with the PGOPTIONS environment variable – and follow
+        --   a simple rule: make sure your data directory path contains only
+        --   printable ASCII, no characters that might be interpreted by the
+        --   shell, and no whitespace.
         --
         -- See postgres(1) for more information on these flags.
-        --
-        "-o",
-        printf "-h '' -p %u -k %s" arbitraryPort dataDir
         --
         -- The parameters above can also be set in $PGDATA/postgresql.conf. See
         -- https://www.postgresql.org/docs/9.6/config-setting.html. Parameters
@@ -110,7 +123,7 @@ start cluster@Cluster {dataDir} = do
         --
         -- -h can also be configured by setting `listen_addresses` parameter.
         --
-        -- -p can also be set via `port` parameter or PGPORT environment
+        -- -p can also be set via the `port` parameter or PGPORT environment
         --    variable, but defaults to 5432 (compiled in).
         --
         -- -k can also be configured by setting `unix_socket_directories`
@@ -141,7 +154,13 @@ stop cluster = do
   env <- clusterEnvironment cluster
   Process.runProcess_
     $ Process.setEnv env
-    $ Process.proc "pg_ctl" ["stop"]
+    $ Process.proc
+      "pg_ctl"
+      [ "stop",
+        "--silent", -- No informational messages.
+        "-w", -- Wait for shutdown (default).
+        "--mode=fast" -- Shutdown mode (default).
+      ]
 
 destroy :: Cluster -> IO ()
 destroy Cluster {dataDir} =
