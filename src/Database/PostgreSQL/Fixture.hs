@@ -8,8 +8,8 @@ where
 
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Acquire
-import qualified Database.PostgreSQL.Cluster as Cluster
-import Database.PostgreSQL.Cluster (Cluster (Cluster))
+import qualified Database.PostgreSQL.Fixture.Cluster as Cluster
+import Database.PostgreSQL.Fixture.Cluster (Cluster (Cluster))
 import qualified Database.PostgreSQL.Fixture.Settings as Settings
 import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Simple.Types as Simple.Types

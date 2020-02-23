@@ -1,4 +1,4 @@
-module Database.PostgreSQL.Consumers
+module Database.PostgreSQL.Fixture.Consumers
   ( Consumer (..),
     ConsumerType (..),
     acquire,

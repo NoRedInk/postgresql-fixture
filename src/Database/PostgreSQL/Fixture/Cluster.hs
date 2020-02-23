@@ -1,8 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- |
--- Description : Fixtures for bringing up PostgreSQL clusters.
-module Database.PostgreSQL.Cluster
+module Database.PostgreSQL.Fixture.Cluster
   ( Cluster (..),
     create,
     start,
