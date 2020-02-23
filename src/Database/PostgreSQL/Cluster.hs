@@ -48,6 +48,9 @@ create cluster = do
   -- TODO: Set TZ here too? See initdb(1).
   -- TODO: Set locale too? See initdb(1).
   -- TODO: Set --nosync for speed? See initdb(1).
+  -- TODO: Just use initdb(1) here instead of pg_ctl(1)? pg_ctl adds almost
+  --   nothing for init, and its naïve quoting of arguments seals the deal
+  --   against it.
   env <- clusterEnvironment cluster
   Process.runProcess_
     $ Process.setEnv env
@@ -76,6 +79,11 @@ start :: Cluster -> IO Settings.ConnectionSettings
 start cluster@Cluster {dataDir} = do
   -- TODO: Use -o -F to disable fsync for speed? See postgres(1).
   --       Or set `fsync = off` in postgresql.conf.
+  -- TODO: Just use postgres(1) here instead of pg_ctl(1)? pg_ctl adds some PID
+  --   file stuff (not sure if that's necessary to be honest), some setsid(3)
+  --   stuff (easy to reproduce), and can wait for the server to start (useful,
+  --   not so easy to reproduce, but not impossible). Its naïve quoting of
+  --   arguments, however, leaves a lot to be desired.
   env <- clusterEnvironment cluster
   Process.runProcess_
     $ Process.setEnv env
@@ -151,6 +159,11 @@ start cluster@Cluster {dataDir} = do
 
 stop :: Cluster -> IO ()
 stop cluster = do
+  -- TODO: Don't use pg_ctl(1) here? pg_ctl reads postmaster.pid and waits for
+  --   shutdown to complete but adds little else for our purposes (it has a
+  --   "smart" shutdown mode which detects if a backup is in progress and sends
+  --   a SIGTERM instead of SIGINT, but that's it, and we're using the "fast"
+  --   mode anyway since we don't expect backups of a development database).
   env <- clusterEnvironment cluster
   Process.runProcess_
     $ Process.setEnv env
