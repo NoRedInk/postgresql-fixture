@@ -23,13 +23,15 @@ ephemeralCluster' extraEnv = do
   Data.Acquire.mkAcquire (acquire cluster) (release cluster)
   where
     acquire :: Cluster -> IO ConnectionSettings
-    acquire cluster = do
-      Cluster.create cluster
-      Cluster.start cluster
+    acquire cluster =
+      Cluster.lockExclusive cluster $ do
+        Cluster.create cluster
+        Cluster.start cluster
     release :: Cluster -> ConnectionSettings -> IO ()
-    release cluster _ = do
-      Cluster.stop cluster
-      Cluster.destroy cluster
+    release cluster _ =
+      Cluster.lockExclusive cluster $ do
+        Cluster.stop cluster
+        Cluster.destroy cluster
 
 temporaryDirectory :: Data.Acquire.Acquire FilePath
 temporaryDirectory = do
