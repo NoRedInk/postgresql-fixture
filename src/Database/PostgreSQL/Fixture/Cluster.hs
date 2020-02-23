@@ -34,8 +34,19 @@ import qualified System.Posix.User as User
 import qualified System.Process.Typed as Process
 import Text.Printf (printf)
 
+-- TODO: Split out cluster stuff from "where are the PostgreSQL binaries" stuff.
+--   Some of the code below is bothered about checking the version of PostgreSQL
+--   tools that we're using, but that's kind of a separate concern. Perhaps we
+--   should pass in here a `Tools` structure that determines what tools we use
+--   to carry out the tasks herein. Separately we ought to be able to inspect
+--   what version a preexisting cluster can be run with (see the `PG_VERSION`
+--   file in $PGDATA), and that _is_ a task for this module.
+
 data Cluster
   = Cluster
+      -- TODO: Ensure that `dataDir` is absolute. The `-k dir` argument when
+      -- starting must be absolute (and we use `dataDir` for this right now) or
+      -- else the cluster will not start.
       { dataDir :: FilePath,
         environ :: [(String, String)]
       }
@@ -92,6 +103,16 @@ start cluster@Cluster {dataDir} = do
         "-w", -- Wait for start (this is *not* the default).
         "--log=" <> dataDir </> "log", -- Log to `$dataDir/log`.
         "-o",
+        -- TODO: Set the socket directory (the argument to `-k`) to something
+        -- like ~/.local/share/postgresql/sockets/fhef53 and put a symlink in
+        -- the cluster directory to it? Nix can't cope with UNIX sockets and we
+        -- can't get it to ignore them but it doesn't mind _symlinks_ to socket
+        -- files, so we can put the sockets somewhere Nix isn't going to see
+        -- them. There should be a symlink from $PGDATA/sockets (or something
+        -- like that) to ~/.local/.../sockets, *and* a symlink from the latter
+        -- to $PGDATA. This lets us figure out stale sockets and automatically
+        -- reap them. Or maybe put them in $TMP/somewhere in the hope that the
+        -- OS will clear them out after a reboot.
         printf "-h '' -p %u -k %s" arbitraryPort dataDir
         --
         -- Explanation of the options being passed in via `-o`:
