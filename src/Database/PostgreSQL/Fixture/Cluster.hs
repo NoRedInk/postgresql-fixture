@@ -65,6 +65,7 @@ create cluster = do
     $ Process.proc
       "pg_ctl"
       [ "init",
+        "--silent", -- No informational messages.
         "-o",
         "--auth trust --encoding utf8"
         --

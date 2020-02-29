@@ -72,6 +72,6 @@ pgIsReady settings = do
         ("PGDATABASE", Fixture.Settings.pgDatabase settings |> Fixture.Settings.unPgDatabase)
       ]
   Process.runProcess_
-    ( Process.proc "pg_isready" []
+    ( Process.proc "pg_isready" ["--quiet", "--timeout=20"]
         |> Process.setEnv environment
     )
