@@ -18,15 +18,14 @@ module Database.PostgreSQL.Fixture.Cluster
 where
 
 import Data.Attoparsec.Text as Attoparsec
-import qualified Data.Map.Strict as Dict
+import qualified Data.ByteString.Lazy
 import qualified Data.Text as Text
 import Data.Text (Text)
-import qualified Data.Text.Encoding
 import qualified Data.Text.Lazy
 import qualified Data.Text.Lazy.Encoding
 import qualified Database.PostgreSQL.Fixture.Settings as Settings
-import System.Directory (doesDirectoryExist, doesFileExist, removeDirectoryRecursive)
-import qualified System.Environment as Environment
+import Database.PostgreSQL.Fixture.Util (augmentEnvironment)
+import System.Directory (doesDirectoryExist, removeDirectoryRecursive)
 import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 import qualified System.FileLock as FileLock
 import System.FilePath ((</>), FilePath, takeBaseName, takeDirectory)
@@ -205,7 +204,7 @@ data Version
 versionText :: Version -> Text
 versionText (Version major minor Nothing) = Text.pack $ printf "%d.%d" major minor
 versionText (Version major minor (Just patch)) = Text.pack $ printf "%d.%d.%d" major minor patch
-versionText (Unknown version) = version <> " (unknown)"
+versionText (Unknown version_) = version_ <> " (unknown)"
 
 versionParser :: Parser Version
 versionParser = do
@@ -230,9 +229,9 @@ version cluster = do
       $ Process.setEnv env
       $ Process.proc "pg_ctl" ["--version"]
   let stdout = decodeOutput stdoutRaw
-  let version = parseOnly versionLineParser $ stdout
-  pure $ case version of
-    Left err -> Unknown stdout
+  let version_ = parseOnly versionLineParser $ stdout
+  pure $ case version_ of
+    Left _err -> Unknown stdout
     Right vn -> vn
 
 versionCompare :: Version -> Version -> Maybe Ordering
@@ -270,8 +269,8 @@ status cluster = do
   case exitCode of
     ExitSuccess -> pure Started
     ExitFailure code -> do
-      version <- version cluster
-      case version `versionCompare` minVersion of
+      version_ <- version cluster
+      case version_ `versionCompare` minVersion of
         Nothing ->
           -- The version is unknown so this is a bust.
           pure Unsupported
@@ -313,13 +312,6 @@ clusterEnvironment :: Cluster -> IO [(String, String)]
 clusterEnvironment Cluster {dataDir, environ} =
   augmentEnvironment $ environ ++ [("PGDATA", dataDir)]
 
-augmentEnvironment :: [(String, String)] -> IO [(String, String)]
-augmentEnvironment overrides = do
-  environment <- Environment.getEnvironment
-  let overridesDict = Dict.fromList overrides
-  let environmentDict = Dict.fromList environment
-  let combinedDict = Dict.union overridesDict environmentDict
-  pure $ Dict.toList combinedDict
-
+decodeOutput :: Data.ByteString.Lazy.ByteString -> Text
 decodeOutput =
   Data.Text.Lazy.toStrict . Data.Text.Lazy.Encoding.decodeUtf8

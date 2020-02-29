@@ -33,9 +33,10 @@ library
     Database.PostgreSQL.Fixture.Consumers
     Database.PostgreSQL.Fixture.Ephemeral
     Database.PostgreSQL.Fixture.Settings
+    Database.PostgreSQL.Fixture.Util
   build-depends:
-    attoparsec, base, containers, directory, filepath, unix, typed-process,
-    text, network, resourcet, postgresql-simple, filelock
+    attoparsec, base, bytestring, containers, directory, filelock, filepath,
+    network, postgresql-simple, resourcet, text, typed-process, unix
   hs-source-dirs:
     src
   default-language:

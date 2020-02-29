@@ -8,7 +8,6 @@ import qualified Data.Acquire
 import Database.PostgreSQL.Fixture.Ephemeral (ephemeralCluster)
 import qualified Database.PostgreSQL.Fixture.Settings as Settings
 import qualified Database.PostgreSQL.Simple as Simple
-import qualified Database.PostgreSQL.Simple.Types as Simple.Types
 
 -- Ideas for top-level API:
 -- cluster :: Cluster -> Data.Acquire.Acquire Settings.ConnectionSettings
