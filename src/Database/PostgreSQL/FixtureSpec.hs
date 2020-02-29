@@ -3,7 +3,6 @@ module Database.PostgreSQL.FixtureSpec (tests) where
 import Data.Acquire (with)
 import qualified Database.PostgreSQL.Simple as Simple
 import qualified Expect
-import qualified MySQL.Internal
 import Nri.Prelude
 import qualified Postgres.Internal
 import Postgres.Internal (augmentEnvironment)
@@ -16,8 +15,7 @@ tests :: Test
 tests =
   describe
     "Internal PostgreSQL tests"
-    [ ephemeralClusterTests,
-      setupProxyDatabaseTests
+    [ ephemeralClusterTests
     ]
 
 ephemeralClusterTests :: Test
@@ -47,45 +45,6 @@ ephemeralClusterTests =
           (Postgres.Settings.pgHost >> Postgres.Settings.unPgHost >> toS >> pure)
           |> andThen doesDirectoryExist
           |> Expect.withIO Expect.false
-    ]
-
-setupProxyDatabaseTests :: Test
-setupProxyDatabaseTests =
-  describe
-    "setupProxyDatabase"
-    [ test "it can be connected to" <| \() ->
-        with
-          MySQL.Internal.ephemeralMySQL
-          ( \mysqlSettings ->
-              with
-                ( Postgres.Internal.setupProxyDatabase
-                    []
-                    (Postgres.Settings.defaultSettings |> Postgres.Settings.pgConnection)
-                    mysqlSettings
-                )
-                pgIsReady
-          )
-          |> Expect.withIO (always Expect.pass),
-      test "it can import foreign postgres schemas" <| \() ->
-        with
-          MySQL.Internal.ephemeralMySQL
-          ( \mysqlSettings ->
-              with
-                Postgres.Internal.ephemeralCluster
-                ( \ephemeralConnectionSettings -> do
-                    with (Postgres.Internal.simpleConnection ephemeralConnectionSettings)
-                      <| \connection ->
-                        void <| Simple.execute_ connection "CREATE SCHEMA test_schema"
-                    with
-                      ( Postgres.Internal.setupProxyDatabase
-                          ["test_schema"]
-                          ephemeralConnectionSettings
-                          mysqlSettings
-                      )
-                      pgIsReady
-                )
-          )
-          |> Expect.withIO (always Expect.pass)
     ]
 
 pgIsReady :: Postgres.Settings.ConnectionSettings -> IO ()
