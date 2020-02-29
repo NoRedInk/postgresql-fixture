@@ -35,8 +35,8 @@ library
     Database.PostgreSQL.Fixture.Settings
     Database.PostgreSQL.Fixture.Util
   build-depends:
-    attoparsec, base, bytestring, containers, directory, filelock, filepath,
-    network, postgresql-simple, resourcet, text, typed-process, unix
+    attoparsec, base, bytestring, cherry-core, containers, directory, filelock,
+    filepath, network, postgresql-simple, resourcet, text, typed-process, unix
   hs-source-dirs:
     src
   default-language:
@@ -50,7 +50,7 @@ executable postgresql-fixture
   main-is:
     Main.hs
   build-depends:
-    base, directory, filepath, unix, process, optparse-applicative
+    base, cherry-core, directory, filepath, unix, process, optparse-applicative
   default-language:
     Haskell2010
   default-extensions:
