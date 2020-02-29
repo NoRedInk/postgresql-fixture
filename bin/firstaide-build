@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-exec nix-shell --run "$(printf '%q ' "$@")"
+nix-shell --pure -p cabal2nix --run "cabal2nix ." > default.nix \
+    && exec nix-shell --run "$(printf '%q ' "$@")"
