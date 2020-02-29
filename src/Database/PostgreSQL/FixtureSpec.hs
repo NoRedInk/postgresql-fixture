@@ -1,61 +1,75 @@
-module Database.PostgreSQL.FixtureSpec (tests) where
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
+module Database.PostgreSQL.FixtureSpec
+  ( main,
+  )
+where
+
+import Cherry.Prelude
+import Control.Applicative (pure)
 import Data.Acquire (with)
+import qualified Database.PostgreSQL.Fixture as Fixture
+import qualified Database.PostgreSQL.Fixture.Settings as Fixture.Settings
+import Database.PostgreSQL.Fixture.Util (augmentEnvironment)
 import qualified Database.PostgreSQL.Simple as Simple
-import qualified Expect
-import Nri.Prelude
-import qualified Postgres.Internal
-import Postgres.Internal (augmentEnvironment)
-import qualified Postgres.Settings
 import System.Directory (doesDirectoryExist)
+import System.IO (IO)
 import qualified System.Process.Typed as Process
-import Test (Test, describe, test)
+import Test.Tasty (TestTree, defaultMain, testGroup)
+import Test.Tasty.HUnit (assertBool, assertEqual, testCase)
+import Text.Show (show)
 
-tests :: Test
+main :: IO ()
+main = defaultMain tests
+
+tests :: TestTree
 tests =
-  describe
-    "Internal PostgreSQL tests"
+  testGroup
+    "Tests"
     [ ephemeralClusterTests
     ]
 
-ephemeralClusterTests :: Test
+ephemeralClusterTests :: TestTree
 ephemeralClusterTests =
-  describe
+  testGroup
     "ephemeralCluster"
-    [ test "the cluster is ready" <| \() ->
-        with Postgres.Internal.ephemeralCluster pgIsReady
-          |> Expect.withIO (always Expect.pass),
-      test "the cluster can be connected to with the returned settings" <| \() ->
-        with
-          Postgres.Internal.ephemeralCluster
-          ( \ephemeralConnectionSettings ->
-              with
-                (Postgres.Internal.simpleConnection ephemeralConnectionSettings)
-                (\ephemeralConnection -> Simple.query_ ephemeralConnection "SELECT 1234")
-          )
-          |> Expect.withIO (Expect.equal [Simple.Only (1234 :: Int)]),
-      test "cluster is created in directory reported in `pgHost` field" <| \() ->
-        with
-          Postgres.Internal.ephemeralCluster
-          (Postgres.Settings.pgHost >> Postgres.Settings.unPgHost >> toS >> doesDirectoryExist)
-          |> Expect.withIO Expect.true,
-      test "cluster directory is removed on release" <| \() ->
-        with
-          Postgres.Internal.ephemeralCluster
-          (Postgres.Settings.pgHost >> Postgres.Settings.unPgHost >> toS >> pure)
-          |> andThen doesDirectoryExist
-          |> Expect.withIO Expect.false
+    [ testCase "the cluster is ready" <| do
+        with Fixture.ephemeralCluster pgIsReady,
+      testCase "the cluster can be connected to with the returned settings" <| do
+        results <-
+          with
+            Fixture.ephemeralCluster
+            ( \ephemeralConnectionSettings ->
+                with
+                  (Fixture.simpleConnection ephemeralConnectionSettings)
+                  (\ephemeralConnection -> Simple.query_ ephemeralConnection "SELECT 1234")
+            )
+        assertEqual "" [Simple.Only (1234 :: Cherry.Prelude.Int)] results,
+      testCase "cluster is created in directory reported in `pgHost` field" <| do
+        pgHostDirExists <-
+          with
+            Fixture.ephemeralCluster
+            (Fixture.Settings.pgHost >> Fixture.Settings.unPgHost >> doesDirectoryExist)
+        assertBool "" pgHostDirExists,
+      testCase "cluster directory is removed on release" <| do
+        pgHostDir <-
+          with
+            Fixture.ephemeralCluster
+            (Fixture.Settings.pgHost >> Fixture.Settings.unPgHost >> pure)
+        pgHostDirExists <- doesDirectoryExist pgHostDir
+        assertBool "" (not pgHostDirExists)
     ]
 
-pgIsReady :: Postgres.Settings.ConnectionSettings -> IO ()
+pgIsReady :: Fixture.Settings.ConnectionSettings -> IO ()
 pgIsReady settings = do
   environment <-
     augmentEnvironment
-      [ ("PGHOST", Postgres.Settings.pgHost settings |> Postgres.Settings.unPgHost |> toS),
-        ("PGPORT", Postgres.Settings.pgPort settings |> Postgres.Settings.unPgPort |> show),
+      [ ("PGHOST", Fixture.Settings.pgHost settings |> Fixture.Settings.unPgHost),
+        ("PGPORT", Fixture.Settings.pgPort settings |> Fixture.Settings.unPgPort |> show),
         ("PGPASSWORD", ""),
-        ("PGUSER", Postgres.Settings.pgUser settings |> Postgres.Settings.unPgUser |> toS),
-        ("PGDATABASE", Postgres.Settings.pgDatabase settings |> Postgres.Settings.unPgDatabase |> toS)
+        ("PGUSER", Fixture.Settings.pgUser settings |> Fixture.Settings.unPgUser),
+        ("PGDATABASE", Fixture.Settings.pgDatabase settings |> Fixture.Settings.unPgDatabase)
       ]
   Process.runProcess_
     ( Process.proc "pg_isready" []
