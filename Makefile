@@ -1,6 +1,6 @@
 .PHONY:
 build: release.nix
-	nix-build release.nix
+	nix-build release.nix --no-out-link
 
 .PHONY:
 shell: shell.nix

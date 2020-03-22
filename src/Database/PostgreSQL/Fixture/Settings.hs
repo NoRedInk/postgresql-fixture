@@ -1,4 +1,4 @@
-module Database.Postgres.Fixture.Settings
+module Database.PostgreSQL.Fixture.Settings
   ( Settings
       ( Settings,
         pgConnection
@@ -29,8 +29,8 @@ where
 --     pgDBPass,
 --     pgDBUser,
 --   )
-import Network.Socket (SockAddr (SockAddrUnix))
-import System.FilePath ((</>))
+-- import Network.Socket (SockAddr (SockAddrUnix))
+-- import System.FilePath ((</>))
 
 data Settings
   = Settings

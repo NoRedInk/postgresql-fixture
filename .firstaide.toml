@@ -1,0 +1,3 @@
+cache_dir = ".firstaide"
+build_exe = "bin/firstaide-build"
+watch_exe = "bin/firstaide-watch"
