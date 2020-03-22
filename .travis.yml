@@ -1,1 +1,7 @@
+jobs:
+  include:
+    - name: Ubuntu Bionic
+      os: linux
+      dist: bionic
+
 language: haskell
