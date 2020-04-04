@@ -9,5 +9,6 @@ pkgs.stdenv.mkDerivation {
     haskellPackages.cabal-install
     pkgs.postgresql
     pkgs.ormolu
+    pkgs.hlint
   ];
 }
