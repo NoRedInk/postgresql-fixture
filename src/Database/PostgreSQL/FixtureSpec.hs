@@ -8,6 +8,7 @@ where
 import Control.Applicative (pure)
 import Data.Acquire (with)
 import qualified Database.PostgreSQL.Fixture as Fixture
+import qualified Database.PostgreSQL.Fixture.ConsumersSpec as ConsumersSpec
 import qualified Database.PostgreSQL.Fixture.Settings as Fixture.Settings
 import Database.PostgreSQL.Fixture.Util (augmentEnvironment)
 import qualified Database.PostgreSQL.Simple as Simple
@@ -25,7 +26,8 @@ tests :: TestTree
 tests =
   testGroup
     "Tests"
-    [ ephemeralClusterTests
+    [ ephemeralClusterTests,
+      ConsumersSpec.consumersTests
     ]
 
 ephemeralClusterTests :: TestTree
