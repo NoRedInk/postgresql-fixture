@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Database.PostgreSQL.FixtureSpec
@@ -6,7 +5,6 @@ module Database.PostgreSQL.FixtureSpec
   )
 where
 
-import Cherry.Prelude
 import Control.Applicative (pure)
 import Data.Acquire (with)
 import qualified Database.PostgreSQL.Fixture as Fixture
@@ -34,9 +32,9 @@ ephemeralClusterTests :: TestTree
 ephemeralClusterTests =
   testGroup
     "ephemeralCluster"
-    [ testCase "the cluster is ready" <| do
+    [ testCase "the cluster is ready" $ do
         with Fixture.ephemeralCluster pgIsReady,
-      testCase "the cluster can be connected to with the returned settings" <| do
+      testCase "the cluster can be connected to with the returned settings" $ do
         results <-
           with
             Fixture.ephemeralCluster
@@ -45,18 +43,18 @@ ephemeralClusterTests =
                   (Fixture.simpleConnection ephemeralConnectionSettings)
                   (\ephemeralConnection -> Simple.query_ ephemeralConnection "SELECT 1234")
             )
-        assertEqual "" [Simple.Only (1234 :: Cherry.Prelude.Int)] results,
-      testCase "cluster is created in directory reported in `pgHost` field" <| do
+        assertEqual "" [Simple.Only (1234 :: Int)] results,
+      testCase "cluster is created in directory reported in `pgHost` field" $ do
         pgHostDirExists <-
           with
             Fixture.ephemeralCluster
-            (Fixture.Settings.pgHost >> Fixture.Settings.unPgHost >> doesDirectoryExist)
+            (doesDirectoryExist . Fixture.Settings.unPgHost . Fixture.Settings.pgHost)
         assertBool "" pgHostDirExists,
-      testCase "cluster directory is removed on release" <| do
+      testCase "cluster directory is removed on release" $ do
         pgHostDir <-
           with
             Fixture.ephemeralCluster
-            (Fixture.Settings.pgHost >> Fixture.Settings.unPgHost >> pure)
+            (pure . Fixture.Settings.unPgHost . Fixture.Settings.pgHost)
         pgHostDirExists <- doesDirectoryExist pgHostDir
         assertBool "" (not pgHostDirExists)
     ]
@@ -65,13 +63,13 @@ pgIsReady :: Fixture.Settings.ConnectionSettings -> IO ()
 pgIsReady settings = do
   environment <-
     augmentEnvironment
-      [ ("PGHOST", Fixture.Settings.pgHost settings |> Fixture.Settings.unPgHost),
-        ("PGPORT", Fixture.Settings.pgPort settings |> Fixture.Settings.unPgPort |> show),
+      [ ("PGHOST", Fixture.Settings.unPgHost $ Fixture.Settings.pgHost settings),
+        ("PGPORT", show $ Fixture.Settings.unPgPort $ Fixture.Settings.pgPort settings),
         ("PGPASSWORD", ""),
-        ("PGUSER", Fixture.Settings.pgUser settings |> Fixture.Settings.unPgUser),
-        ("PGDATABASE", Fixture.Settings.pgDatabase settings |> Fixture.Settings.unPgDatabase)
+        ("PGUSER", Fixture.Settings.unPgUser $ Fixture.Settings.pgUser settings),
+        ("PGDATABASE", Fixture.Settings.unPgDatabase $ Fixture.Settings.pgDatabase settings)
       ]
   Process.runProcess_
-    ( Process.proc "pg_isready" ["--quiet", "--timeout=20"]
-        |> Process.setEnv environment
+    ( Process.setEnv environment $
+        Process.proc "pg_isready" ["--quiet", "--timeout=20"]
     )
