@@ -4,6 +4,9 @@ ghc:
   - "8.4.4"
   - "8.6.5"
 
+services:
+  - postgresql
+
 install:
   - |
     ghc --version
