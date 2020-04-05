@@ -34,6 +34,7 @@ library
     Database.PostgreSQL.Fixture.Ephemeral
     Database.PostgreSQL.Fixture.Settings
     Database.PostgreSQL.Fixture.Util
+    Database.PostgreSQL.Fixture.Version
   build-depends:
     attoparsec, base, bytestring, containers, directory, filelock, filepath,
     network, postgresql-simple, resourcet, text, typed-process, unix
@@ -71,6 +72,8 @@ test-suite test
     Database.PostgreSQL.Fixture.Ephemeral
     Database.PostgreSQL.Fixture.Settings
     Database.PostgreSQL.Fixture.Util
+    Database.PostgreSQL.Fixture.Version
+    Database.PostgreSQL.Fixture.VersionSpec
     Database.PostgreSQL.FixtureSpec
   build-depends:
     attoparsec, base, bytestring, containers, directory, filelock, filepath,

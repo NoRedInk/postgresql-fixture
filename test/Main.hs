@@ -1,6 +1,7 @@
 module Main (main) where
 
 import qualified Database.PostgreSQL.Fixture.ConsumersSpec as ConsumersSpec
+import qualified Database.PostgreSQL.Fixture.VersionSpec as VersionSpec
 import qualified Database.PostgreSQL.FixtureSpec as FixtureSpec
 import Test.Tasty (TestTree, defaultMain, testGroup)
 
@@ -12,5 +13,6 @@ tests =
   testGroup
     "Tests"
     [ FixtureSpec.ephemeralClusterTests,
-      ConsumersSpec.consumersTests
+      ConsumersSpec.consumersTests,
+      VersionSpec.versionTests
     ]
