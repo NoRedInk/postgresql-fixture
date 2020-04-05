@@ -49,7 +49,7 @@ library
 
 executable postgresql-fixture
   main-is:
-    Main.hs
+    app/Main.hs
   build-depends:
     base, directory, filepath, unix, process, optparse-applicative
   default-language:
