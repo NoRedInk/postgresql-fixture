@@ -44,6 +44,7 @@ library
     Haskell2010
   default-extensions:
     NamedFieldPuns
+    OverloadedStrings
   ghc-options:
     -Wall
 
@@ -56,6 +57,7 @@ executable postgresql-fixture
     Haskell2010
   default-extensions:
     NamedFieldPuns
+    OverloadedStrings
   ghc-options:
     -Wall
 
@@ -85,5 +87,6 @@ test-suite test
     Haskell2010
   default-extensions:
     NamedFieldPuns
+    OverloadedStrings
   ghc-options:
     -Wall

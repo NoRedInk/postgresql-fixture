@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Database.PostgreSQL.Fixture.VersionSpec
   ( versionTests,
   )
