@@ -29,4 +29,4 @@ temporaryDirectory = do
   tmp <- liftIO System.Directory.getTemporaryDirectory
   Data.Acquire.mkAcquire
     (System.Posix.Temp.mkdtemp (tmp </> "pg."))
-    System.Directory.removeDirectoryRecursive
+    System.Directory.removePathForcibly
