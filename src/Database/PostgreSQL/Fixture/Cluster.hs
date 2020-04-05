@@ -6,25 +6,21 @@ module Database.PostgreSQL.Fixture.Cluster
     start,
     stop,
     destroy,
-    Version (..),
-    version,
-    versionText,
-    versionCompare,
     Status (..),
     status,
     lockShared,
     lockExclusive,
+    version,
   )
 where
 
-import Data.Attoparsec.Text as Attoparsec
 import qualified Data.ByteString.Lazy
-import qualified Data.Text as Text
 import Data.Text (Text)
 import qualified Data.Text.Lazy
 import qualified Data.Text.Lazy.Encoding
 import qualified Database.PostgreSQL.Fixture.Settings as Settings
 import Database.PostgreSQL.Fixture.Util (augmentEnvironment)
+import Database.PostgreSQL.Fixture.Version (Version (Version), versionCompare, versionLineParse)
 import System.Directory (doesDirectoryExist, removeDirectoryRecursive)
 import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 import qualified System.FileLock as FileLock
@@ -198,58 +194,14 @@ destroy :: Cluster -> IO ()
 destroy Cluster {dataDir} =
   removeDirectoryRecursive dataDir
 
-data Version
-  = Version Int Int (Maybe Int)
-  | Unknown Text
-
-versionText :: Version -> Text
-versionText (Version major minor Nothing) = Text.pack $ printf "%d.%d" major minor
-versionText (Version major minor (Just patch)) = Text.pack $ printf "%d.%d.%d" major minor patch
-versionText (Unknown version_) = version_ <> " (unknown)"
-
-versionParser :: Parser Version
-versionParser = do
-  major <- decimal
-  minor <- string "." *> decimal
-  patch <- option Nothing (fmap Just $ string "." *> decimal)
-  endOfLine
-  pure $ Version major minor patch
-
-versionLineParser :: Parser Version
-versionLineParser = do
-  string "pg_ctl" *> skipSpace *> skipNonSpace *> skipSpace
-  choice [versionParser, Unknown <$> takeTill isEndOfLine]
-  where
-    skipNonSpace = skipWhile (not . isHorizontalSpace)
-
 version :: Cluster -> IO Version
 version cluster = do
   env <- clusterEnvironment cluster
-  stdoutRaw <-
+  stdout <-
     Process.readProcessStdout_
       $ Process.setEnv env
       $ Process.proc "pg_ctl" ["--version"]
-  let stdout = decodeOutput stdoutRaw
-  let version_ = parseOnly versionLineParser stdout
-  pure $ case version_ of
-    Left _err -> Unknown stdout
-    Right vn -> vn
-
-versionCompare :: Version -> Version -> Maybe Ordering
-versionCompare a b =
-  case (a, b) of
-    (Version majora minora patcha, Version majorb minorb patchb) ->
-      case compare majora majorb of
-        EQ -> case compare minora minorb of
-          EQ -> case (patcha, patchb) of
-            (Just pa, Just pb) -> Just $ compare pa pb
-            (Just _, Nothing) -> Just GT
-            (Nothing, Just _) -> Just LT
-            (Nothing, Nothing) -> Just EQ
-          result -> Just result
-        result -> Just result
-    (_, _) ->
-      Nothing
+  pure $ versionLineParse $ decodeOutput stdout
 
 data Status
   = DoesNotExist
