@@ -32,7 +32,7 @@ where
 -- import Network.Socket (SockAddr (SockAddrUnix))
 -- import System.FilePath ((</>))
 
-data Settings
+newtype Settings
   = Settings
       { pgConnection :: ConnectionSettings
       }

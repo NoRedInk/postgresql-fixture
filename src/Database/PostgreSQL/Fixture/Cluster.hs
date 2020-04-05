@@ -218,7 +218,7 @@ versionParser = do
 versionLineParser :: Parser Version
 versionLineParser = do
   string "pg_ctl" *> skipSpace *> skipNonSpace *> skipSpace
-  choice [versionParser, fmap Unknown $ takeTill isEndOfLine]
+  choice [versionParser, Unknown <$> takeTill isEndOfLine]
   where
     skipNonSpace = skipWhile (not . isHorizontalSpace)
 
@@ -230,7 +230,7 @@ version cluster = do
       $ Process.setEnv env
       $ Process.proc "pg_ctl" ["--version"]
   let stdout = decodeOutput stdoutRaw
-  let version_ = parseOnly versionLineParser $ stdout
+  let version_ = parseOnly versionLineParser stdout
   pure $ case version_ of
     Left _err -> Unknown stdout
     Right vn -> vn

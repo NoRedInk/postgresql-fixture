@@ -1,5 +1,6 @@
 module Database.PostgreSQL.Fixture.Consumers
-  ( Consumer (..),
+  ( Resource (..),
+    Consumer (..),
     ConsumerType (..),
     acquire,
     release,
@@ -17,24 +18,27 @@ import System.Posix.Process (getProcessID)
 import System.Posix.Types (CPid (CPid))
 import Text.Printf (printf)
 
+newtype Resource
+  = Resource FilePath
+
 data ConsumerType
   = Persistent String
   | Runtime
 
 data Consumer
   = Consumer
-      { lockDir :: FilePath,
+      { resource :: Resource,
         consumerType :: ConsumerType
       }
 
 acquire :: Consumer -> IO ()
-acquire consumer@Consumer {lockDir} = do
+acquire consumer@Consumer {resource = Resource lockDir} = do
   Directory.createDirectoryIfMissing True lockDir
   lockFilePath_ <- lockFilePath consumer
   writeFile lockFilePath_ ""
 
 release :: Consumer -> IO ()
-release consumer = do
+release consumer =
   catchJust predicate removeLockFile pure
   where
     removeLockFile = do
@@ -44,8 +48,8 @@ release consumer = do
       | isDoesNotExistError e = Just ()
       | otherwise = Nothing
 
-inUse :: Consumer -> IO Bool
-inUse Consumer {lockDir} =
+inUse :: Resource -> IO Bool
+inUse (Resource lockDir) =
   catchJust predicate removeLockDir pure
   where
     removeLockDir = do
@@ -61,7 +65,7 @@ inUse Consumer {lockDir} =
       errno
 
 lockFilePath :: Consumer -> IO FilePath
-lockFilePath Consumer {lockDir, consumerType} =
+lockFilePath Consumer {resource = Resource lockDir, consumerType} =
   case consumerType of
     Persistent name ->
       pure $ lockDir </> name
