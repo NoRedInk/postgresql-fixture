@@ -1,34 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Database.PostgreSQL.FixtureSpec
-  ( main,
+  ( ephemeralClusterTests,
   )
 where
 
 import Control.Applicative (pure)
 import Data.Acquire (with)
 import qualified Database.PostgreSQL.Fixture as Fixture
-import qualified Database.PostgreSQL.Fixture.ConsumersSpec as ConsumersSpec
 import qualified Database.PostgreSQL.Fixture.Settings as Fixture.Settings
 import Database.PostgreSQL.Fixture.Util (augmentEnvironment)
 import qualified Database.PostgreSQL.Simple as Simple
 import System.Directory (doesDirectoryExist)
 import System.IO (IO)
 import qualified System.Process.Typed as Process
-import Test.Tasty (TestTree, defaultMain, testGroup)
+import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertBool, assertEqual, testCase)
 import Text.Show (show)
-
-main :: IO ()
-main = defaultMain tests
-
-tests :: TestTree
-tests =
-  testGroup
-    "Tests"
-    [ ephemeralClusterTests,
-      ConsumersSpec.consumersTests
-    ]
 
 ephemeralClusterTests :: TestTree
 ephemeralClusterTests =
