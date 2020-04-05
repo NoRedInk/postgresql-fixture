@@ -38,7 +38,7 @@ acquire consumer@Consumer {resource = Resource lockDir} = do
   writeFile lockFilePath_ ""
 
 release :: Consumer -> IO ()
-release consumer = do
+release consumer =
   catchJust predicate removeLockFile pure
   where
     removeLockFile = do
@@ -65,7 +65,7 @@ inUse (Resource lockDir) =
       errno
 
 lockFilePath :: Consumer -> IO FilePath
-lockFilePath Consumer {resource = Resource lockDir, consumerType} = do
+lockFilePath Consumer {resource = Resource lockDir, consumerType} =
   case consumerType of
     Persistent name ->
       pure $ lockDir </> name

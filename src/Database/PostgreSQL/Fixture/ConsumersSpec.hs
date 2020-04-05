@@ -41,7 +41,7 @@ acquireTests =
   testGroup
     "acquire and release"
     [ acquireTest "acquire persistent consumer" $ Persistent "foobar",
-      acquireTest "acquire runtime consumer" $ Runtime,
+      acquireTest "acquire runtime consumer" Runtime,
       testCase "acquire persistent consumer, naming"
         $ with temporaryDirectory
         $ \tempDir -> do
@@ -76,7 +76,7 @@ releaseTests =
   testGroup
     "release"
     [ releaseTest "release persistent consumer" $ Persistent "foobar",
-      releaseTest "release runtime consumer" $ Runtime
+      releaseTest "release runtime consumer" Runtime
     ]
   where
     releaseTest desc consumerType =
@@ -98,9 +98,9 @@ inUseTests =
   testGroup
     "inUse"
     [ acquiredTest "persistent consumer" $ Persistent "foobar",
-      acquiredTest "runtime consumer" $ Runtime,
+      acquiredTest "runtime consumer" Runtime,
       acquiredAndReleasedTest "persistent consumer, released" $ Persistent "foobar",
-      acquiredAndReleasedTest "runtime consumer, released" $ Runtime,
+      acquiredAndReleasedTest "runtime consumer, released" Runtime,
       testCaseSteps "acquire, release, interleaved" $ \step ->
         with temporaryDirectory $ \tempDir -> do
           let resource = Resource tempDir
@@ -140,8 +140,8 @@ inUseTests =
         assertFalse "in use" =<< inUse resource
 
 assertTrue :: HasCallStack => String -> Bool -> Assertion
-assertTrue message =
-  assertBool message
+assertTrue =
+  assertBool
 
 assertFalse :: HasCallStack => String -> Bool -> Assertion
 assertFalse message =

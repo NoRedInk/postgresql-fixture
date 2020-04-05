@@ -22,7 +22,7 @@ ephemeralClusterTests :: TestTree
 ephemeralClusterTests =
   testGroup
     "ephemeralCluster"
-    [ testCase "the cluster is ready" $ do
+    [ testCase "the cluster is ready" $
         with Fixture.ephemeralCluster pgIsReady,
       testCase "the cluster can be connected to with the returned settings" $ do
         results <-
@@ -31,7 +31,7 @@ ephemeralClusterTests =
             ( \ephemeralConnectionSettings ->
                 with
                   (Fixture.simpleConnection ephemeralConnectionSettings)
-                  (\ephemeralConnection -> Simple.query_ ephemeralConnection "SELECT 1234")
+                  (`Simple.query_` "SELECT 1234")
             )
         assertEqual "" [Simple.Only (1234 :: Int)] results,
       testCase "cluster is created in directory reported in `pgHost` field" $ do
