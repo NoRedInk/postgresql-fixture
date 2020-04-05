@@ -9,7 +9,20 @@ module Database.PostgreSQL.Fixture.Version
   )
 where
 
-import Data.Attoparsec.Text as Attoparsec
+import Data.Attoparsec.Text
+  ( Parser,
+    choice,
+    decimal,
+    isEndOfLine,
+    isHorizontalSpace,
+    option,
+    parseOnly,
+    skipSpace,
+    skipWhile,
+    skipWhile,
+    string,
+    takeTill,
+  )
 import qualified Data.Text as Text
 import Data.Text (Text)
 import Text.Printf (printf)
@@ -17,6 +30,7 @@ import Text.Printf (printf)
 data Version
   = Version Int Int (Maybe Int)
   | Unknown Text
+  deriving (Eq, Show)
 
 -- | Return the version string.
 versionText :: Version -> Text
@@ -45,7 +59,6 @@ versionParser = do
   major <- decimal
   minor <- string "." *> decimal
   patch <- option Nothing (fmap Just $ string "." *> decimal)
-  endOfLine
   pure $ Version major minor patch
 
 versionLineParser :: Parser Version

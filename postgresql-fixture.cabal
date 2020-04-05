@@ -73,6 +73,7 @@ test-suite test
     Database.PostgreSQL.Fixture.Settings
     Database.PostgreSQL.Fixture.Util
     Database.PostgreSQL.Fixture.Version
+    Database.PostgreSQL.Fixture.VersionSpec
     Database.PostgreSQL.FixtureSpec
   build-depends:
     attoparsec, base, bytestring, containers, directory, filelock, filepath,
