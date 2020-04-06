@@ -33,6 +33,7 @@ library
     Database.PostgreSQL.Fixture.Consumers
     Database.PostgreSQL.Fixture.Ephemeral
     Database.PostgreSQL.Fixture.Settings
+    Database.PostgreSQL.Fixture.Shared
     Database.PostgreSQL.Fixture.Util
     Database.PostgreSQL.Fixture.Version
   build-depends:
@@ -73,6 +74,7 @@ test-suite test
     Database.PostgreSQL.Fixture.ConsumersSpec
     Database.PostgreSQL.Fixture.Ephemeral
     Database.PostgreSQL.Fixture.Settings
+    Database.PostgreSQL.Fixture.Shared
     Database.PostgreSQL.Fixture.Util
     Database.PostgreSQL.Fixture.Version
     Database.PostgreSQL.Fixture.VersionSpec
