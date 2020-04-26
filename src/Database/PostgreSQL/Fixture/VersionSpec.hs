@@ -12,12 +12,8 @@ import Database.PostgreSQL.Fixture.Version
   )
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit
-  ( Assertion,
-    HasCallStack,
-    assertBool,
-    assertEqual,
+  ( assertEqual,
     testCase,
-    testCaseSteps,
   )
 
 versionTests :: TestTree
