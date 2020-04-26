@@ -5,8 +5,7 @@ where
 
 import Data.Acquire (with)
 import Database.PostgreSQL.Fixture.Consumers
-  ( Consumer (Consumer),
-    ConsumerType (Persistent, Runtime),
+  ( Consumer (Persistent, Runtime),
     Resource (Resource),
     acquire,
     inUse,
@@ -44,29 +43,28 @@ acquireTests =
         $ with temporaryDirectory
         $ \tempDir -> do
           let resource = Resource tempDir
-          acquire $ Consumer resource $ Persistent "alice"
+          acquire (Persistent "alice") resource
           assertEqual "" ["alice"] =<< listDirectory tempDir,
       testCase "acquire runtime consumer, naming"
         $ with temporaryDirectory
         $ \tempDir -> do
           pid <- System.Posix.Process.getProcessID
           let resource = Resource tempDir
-          acquire $ Consumer resource Runtime
+          acquire Runtime resource
           assertEqual "" ["pid." <> show pid] =<< listDirectory tempDir
     ]
   where
-    acquireTest desc consumerType =
+    acquireTest desc consumer =
       testCaseSteps desc $ \step ->
         with temporaryDirectory $ \tempDir -> do
           let resource = Resource tempDir
-          let consumer = Consumer resource consumerType
           --
           step "acquire"
-          acquire consumer
+          acquire consumer resource
           assertNonEmpty =<< listDirectory tempDir
           --
           step "acquire again"
-          acquire consumer
+          acquire consumer resource
           assertNonEmpty =<< listDirectory tempDir
 
 releaseTests :: TestTree
@@ -77,18 +75,17 @@ releaseTests =
       releaseTest "release runtime consumer" Runtime
     ]
   where
-    releaseTest desc consumerType =
+    releaseTest desc consumer =
       testCaseSteps desc $ \step ->
         with temporaryDirectory $ \tempDir -> do
           let resource = Resource tempDir
-          let consumer = Consumer resource consumerType
           --
           step "acquire and release"
-          acquire consumer >> release consumer
+          acquire consumer resource >> release consumer resource
           assertEmpty =<< listDirectory tempDir
           --
           step "release again"
-          release consumer
+          release consumer resource
           assertEmpty =<< listDirectory tempDir
 
 inUseTests :: TestTree
@@ -102,39 +99,38 @@ inUseTests =
       testCaseSteps "acquire, release, interleaved" $ \step ->
         with temporaryDirectory $ \tempDir -> do
           let resource = Resource tempDir
-          let consumer1 = Consumer resource (Persistent "foobar")
-          let consumer2 = Consumer resource Runtime
+          let consumer1 = Persistent "foobar"
+          let consumer2 = Runtime
           --
           step "before acquiring resource"
           assertFalse "in use" =<< inUse resource
           --
           step "first consumer acquire"
-          acquire consumer1
+          acquire consumer1 resource
           assertTrue "not in use" =<< inUse resource
           --
           step "second consumer acquire"
-          acquire consumer2
+          acquire consumer2 resource
           assertTrue "not in use" =<< inUse resource
           --
           step "first consumer release"
-          release consumer1
+          release consumer1 resource
           assertTrue "not in use" =<< inUse resource
           --
           step "second consumer release"
-          release consumer2
+          release consumer2 resource
           assertFalse "in use" =<< inUse resource
     ]
   where
-    acquiredTest desc consumerType =
+    acquiredTest desc consumer =
       testCase desc $ with temporaryDirectory $ \tempDir -> do
         let resource = Resource tempDir
-        acquire (Consumer resource consumerType)
+        acquire consumer resource
         assertTrue "not in use" =<< inUse resource
-    acquiredAndReleasedTest desc consumerType =
+    acquiredAndReleasedTest desc consumer =
       testCase desc $ with temporaryDirectory $ \tempDir -> do
         let resource = Resource tempDir
-        let consumer = Consumer resource consumerType
-        acquire consumer >> release consumer
+        acquire consumer resource >> release consumer resource
         assertFalse "in use" =<< inUse resource
 
 assertTrue :: HasCallStack => String -> Bool -> Assertion

@@ -22,12 +22,12 @@ withCluster dataDir =
     resource =
       Consumers.Resource $ dataDir </> "consumers"
     consumer =
-      Consumers.Consumer resource Consumers.Runtime
+      Consumers.Runtime
     acquire :: IO ConnectionSettings
     acquire =
       Cluster.lockExclusive cluster $ do
         Cluster.create cluster
-        Consumers.acquire consumer
+        Consumers.acquire consumer resource
         Cluster.start cluster
     release :: ConnectionSettings -> IO ()
     release _ =
@@ -36,13 +36,13 @@ withCluster dataDir =
         if shouldStop
           then Cluster.stop cluster
           else pure ()
-        Consumers.release consumer
+        Consumers.release consumer resource
 
 useCluster :: FilePath -> Text -> IO ConnectionSettings
 useCluster dataDir consumerName =
   Cluster.lockExclusive cluster $ do
     Cluster.create cluster
-    Consumers.acquire consumer
+    Consumers.acquire consumer resource
     Cluster.start cluster
   where
     cluster =
@@ -50,7 +50,7 @@ useCluster dataDir consumerName =
     resource =
       Consumers.Resource $ dataDir </> "consumers"
     consumer =
-      Consumers.Consumer resource $ Consumers.Persistent $ unpack consumerName
+      Consumers.Persistent $ unpack consumerName
 
 releaseCluster :: FilePath -> Text -> IO ()
 releaseCluster dataDir consumerName =
@@ -59,11 +59,11 @@ releaseCluster dataDir consumerName =
     if shouldStop
       then Cluster.stop cluster
       else pure ()
-    Consumers.release consumer
+    Consumers.release consumer resource
   where
     cluster =
       Cluster dataDir []
     resource =
       Consumers.Resource $ dataDir </> "consumers"
     consumer =
-      Consumers.Consumer resource $ Consumers.Persistent $ unpack consumerName
+      Consumers.Persistent $ unpack consumerName
